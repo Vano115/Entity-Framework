@@ -1,5 +1,4 @@
 ﻿using Entity_Framework.Entityes;
-using Entity_Framework.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,8 +38,26 @@ namespace Entity_Framework.Repositories
 
             using (var db = new Configuration.AppContext())
             {
-                db.Authors.Attach(author);
+                Author dbAuthor = db.Authors.First(u => u.Id == author.Id);
+                dbAuthor.Name = author.Name;
+
                 db.Authors.Update(author);
+                result = db.SaveChanges();
+            }
+
+            return result;
+        }
+
+        public int AddAuthorBooks(Author author, List<Book> books)
+        {
+            int result = 0;
+
+            using (var db = new Configuration.AppContext())
+            {
+                Author dbAuthor = db.Authors.First(u => u.Id == author.Id);
+                dbAuthor.Books.AddRange(books);
+
+                db.Authors.Update(dbAuthor);
                 result = db.SaveChanges();
             }
 
@@ -95,7 +112,22 @@ namespace Entity_Framework.Repositories
                 result = db.Authors.First(a => a.Id == id);
             }
 
-            if (result == null) throw new AuthorNotFoundException();
+            return result;
+
+        }
+
+        /// <summary>
+        /// Получение всего списка авторов из БД
+        /// </summary>
+        /// <returns>List <Author></returns>
+        public List<Book> GetAuthorsBook(Author author)
+        {
+            List<Book> result;
+
+            using (var db = new Configuration.AppContext())
+            {
+                result = db.Authors.First(a => a.Id == author.Id).Books;
+            }
 
             return result;
 

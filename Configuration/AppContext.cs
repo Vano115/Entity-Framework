@@ -20,9 +20,9 @@ namespace Entity_Framework.Configuration
 
         public AppContext()
         {
-            //Database.EnsureDeleted();
-            Database.Migrate();
-            //Database.EnsureCreated();
+              //Database.EnsureDeleted();
+            //Database.Migrate();
+            Database.EnsureCreated();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

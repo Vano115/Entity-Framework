@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Entity_Framework.Entityes;
-using Entity_Framework.Services;
-using Entity_Framework.Exceptions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,8 +42,30 @@ namespace Entity_Framework.Repositories
 
             using (var db = new Configuration.AppContext())
             {
-                db.Users.Attach(user);
-                db.Users.Update(user);
+                User dbUser = db.Users.First(u => u.Id == user.Id);
+                dbUser.Name = user.Name;
+                dbUser.Email = user.Email;
+
+                db.Users.Update(dbUser);
+                result = db.SaveChanges();
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Обновление пользователя в БД
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public int AddUserBooks(User user, List<Book> books)
+        {
+            int result = 0;
+
+            using (var db = new Configuration.AppContext())
+            {
+                User dbUser = db.Users.First(u => u.Id == user.Id);
+                dbUser.Books = dbUser.Books.Union(books).ToList();
+                db.Users.Update(dbUser);
                 result = db.SaveChanges();
             }
             return result;

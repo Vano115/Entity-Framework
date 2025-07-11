@@ -1,7 +1,6 @@
 ﻿
 using Entity_Framework.Entityes;
 using Entity_Framework.Repositories;
-using Entity_Framework.Services;
 using System.Data.SqlTypes;
 
 namespace Entity_Framework
@@ -10,17 +9,9 @@ namespace Entity_Framework
     {
         static void Main(string[] args)
         {
-            List<int> one = new List<int>() { 1, 2, 3, 4 };
-            List<int> two = new List<int>() { 1, 2, 3, 4 };
-            foreach (var item in one.Except(two))
-            {
-                Console.WriteLine(item);
-            };
-
-
-            BookService bookService = new BookService();
-            AuthorService authorService = new AuthorService();
-            UserService userService = new UserService();
+            BookRepository bookRepository = new BookRepository();
+            AuthorRepository authorRepository = new AuthorRepository();
+            UserRepository userRepository = new UserRepository();
 
             // Наполнение БД
 
@@ -30,10 +21,10 @@ namespace Entity_Framework
             Author author4 = new Author() { Name = "Tor" };
 
             // Добавляем авторов в БД
-            authorService.AddAuthor(author);
-            authorService.AddAuthor(author2);
-            authorService.AddAuthor(author3);
-            authorService.AddAuthor(author4);
+            authorRepository.Add(author);
+            authorRepository.Add(author2);
+            authorRepository.Add(author3);
+            authorRepository.Add(author4);
 
             // Создаём книг
             List<Book> books = new List<Book> { new Book() { Title = "Piece", Genre = "Horror", Public_year = new DateOnly(10, 1, 6) },
@@ -48,7 +39,10 @@ namespace Entity_Framework
 
             // Добавляем книги в БД
 
-            bookService.AddBook(books);
+            foreach(var b in books)
+            {
+                bookRepository.Add(b);
+            }
 
             // Пользователи
             User user = new User { Name = "Kak", Email = "gmail67@gmail.com"};
@@ -57,41 +51,38 @@ namespace Entity_Framework
             User user4 = new User { Name = "Vishnyakov", Email = "45591@gmail.com" };
 
             // Добавление пользователей в БД
-            userService.AddUser(user);
-            userService.AddUser(user2);
-            userService.AddUser(user3);
-            userService.AddUser(user4);
+            userRepository.Add(user);
+            userRepository.Add(user2);
+            userRepository.Add(user3);
+            userRepository.Add(user4);
 
             // Переопределение сущностям существующих в БД данных
-            user = userService.FindUserById(1);
-            user2 = userService.FindUserById(2);
-            user3 = userService.FindUserById(3);
+            user = userRepository.FindByEmail(user.Email);
+            user2 = userRepository.FindByEmail(user2.Email);
+            user3 = userRepository.FindByEmail(user3.Email);
+            user4 = userRepository.FindByEmail(user4.Email);
 
-            author = authorService.FindAuthorById(1);
-            author2 = authorService.FindAuthorById(2);
-            author3 = authorService.FindAuthorById(3);
-            author4 = authorService.FindAuthorById(4);
+            author = authorRepository.FindByName(author.Name);
+            author2 = authorRepository.FindByName(author2.Name);
+            author3 = authorRepository.FindByName(author3.Name);
+            author4 = authorRepository.FindByName(author4.Name);
 
-            Book book = bookService.FindBookById(1);
-            Book book2 = bookService.FindBookById(2);
-            Book book3 = bookService.FindBookById(3);
+            Book book = bookRepository.FindByTitle(books[0].Title);
+            Book book2 = bookRepository.FindByTitle(books[3].Title);
+            Book book3 = bookRepository.FindByTitle(books[2].Title);
 
-            userService.GetBooks(user, new List<Book> { book, book2});
-            userService.GetBooks(user3, new List<Book> { book3, book2 });
-
-            bookService.AddAuthors(book, new List<Author> { author });
-            bookService.AddAuthors(book2, new List<Author> {author2, author});
-            bookService.AddAuthors(book3, new List<Author> { author3 });
+            userRepository.AddUserBooks(user, new List<Book> { book});
+            authorRepository.AddAuthorBooks(author, new List<Book> { book3 });
 
 
 
             // Получение списка книг по заданому жанру
-            List<Book> genreSelect = bookService.GetBooksByGenre();
+            List<Book> genreSelect = bookRepository.FindBooksInGenre("Horror"); ;
             ShowBook(genreSelect);
             Console.WriteLine("---------------------Жанр");
-
+            
             // Получение списка книг по заданому диапазону дат
-            List<Book> dateSelect = bookService.GetBooksByYears(new DateOnly(1, 1, 1), new DateOnly(1000, 1, 1));
+            List<Book> dateSelect = bookRepository.GetBooksByYears(new DateOnly(1, 1, 1), new DateOnly(1000, 1, 1));
             ShowBook(dateSelect);
             Console.WriteLine("---------------------с 1 по 1000 год");
 
@@ -100,47 +91,47 @@ namespace Entity_Framework
             ShowBook(genreDateSelect);
             Console.WriteLine("---------------------Жанр и с 1 по 1000 год");
 
-            int countAuthorBook = authorService.GetCountBooks(author);
+            int countAuthorBook = authorRepository.GetAuthorsBook(author).Count;
             Console.WriteLine(countAuthorBook);
             Console.WriteLine($"--------------------Количество книг автора {author.Name}");
 
-            List<Book> usersBook = userService.GetUsersBooks(user);
+            List<Book> usersBook = userRepository.FindById(user.Id).Books;
             ShowBook(usersBook);
             Console.WriteLine($"--------------------Книги пользователя {user.Name}");
 
             string genre = "Horror";
-            int countGenreBook = bookService.GetBooksByGenre(genre).Count;
+            int countGenreBook = bookRepository.FindBooksInGenre(genre).Count;
             Console.WriteLine(countGenreBook);
             Console.WriteLine($"--------------------Количество книг жанра {genre}");
 
             string title = "20000";
-            string title2 = "19999";
-            bool checkBookTitle = bookService.GetBookByTitle(title) != null;
-            bool checkBookTitle2 = bookService.GetBookByTitle(title2) != null;
+            string title2 = "tshth";
+            bool checkBookTitle = bookRepository.FindByTitle(title) != null;
+            bool checkBookTitle2 = bookRepository.FindByTitle(title) == null;
             Console.WriteLine(checkBookTitle + "\tПроверка существующего");
             Console.WriteLine(checkBookTitle2 + "\tПроверка не существующего");
             Console.WriteLine($"--------------------True or False на наличие книг {title} and {title2}");
 
             string authorForFind = "Tor";
             string authorForNotFind = "ajgnn";
-            bool checkAuthor = authorService.FindAuthorByName(authorForFind) != null;
-            bool checkAuthor2 = authorService.FindAuthorByName(authorForNotFind) != null;
+            bool checkAuthor = authorRepository.FindByName(authorForFind) != null;
+            bool checkAuthor2 = authorRepository.FindByName(authorForNotFind) != null;
             Console.WriteLine($"--------------------True or False на наличие авторов {authorForFind} and {authorForNotFind}");
 
-            int countUserBook = userService.GetUsersBooks(user).Count;
-            int countUserBook2 = userService.GetUsersBooks(user3).Count;
+            int countUserBook = userRepository.ListBooks(user).Count;
+            int countUserBook2 = userRepository.ListBooks(user3).Count;
             Console.WriteLine($"Количество книг у пользователя {user.Name}: {countUserBook}");
             Console.WriteLine($"Количество книг у пользователя {user3.Name}: {countUserBook2}");
             Console.WriteLine($"--------------------Количество книг пользователя");
 
-            Book moreLateBook = bookService.GetAllBooks().MaxBy(p => p.Public_year);
+            Book moreLateBook = bookRepository.GetAllTable().MaxBy(p => p.Public_year);
             Console.WriteLine($"--------------------Самая поздняя выпущеная книга: {moreLateBook.Title}");
 
-            List<Book> sortedByTitle = bookService.GetAllBooks().OrderBy(p => p.Title).ToList();
+            List<Book> sortedByTitle = bookRepository.GetAllTable().OrderBy(p => p.Title).ToList();
             ShowBook(sortedByTitle);
             Console.WriteLine($"--------------------Список книг в алфивитном порядке");
 
-            List<Book> sortedByYear = bookService.GetAllBooks().OrderByDescending(p => p.Public_year).ToList();
+            List<Book> sortedByYear = bookRepository.GetAllTable().OrderByDescending(p => p.Public_year).ToList();
             ShowBook(sortedByYear);
             Console.WriteLine($"--------------------Список книг в порядке убывания даты выхода");
         }
@@ -171,21 +162,4 @@ namespace Entity_Framework
             Console.WriteLine("////////////////////////////////////////");
         }
     }
-
-
-        // Нужно реализовать 
-        //Получать список книг определенного жанра и вышедших между определенными годами.
-        //Получать количество книг определенного автора в библиотеке.
-        //Получать количество книг определенного жанра в библиотеке.
-        //Получать булевый флаг о том, есть ли книга определенного автора и с определенным названием в библиотеке.
-        //Получать булевый флаг о том, есть ли определенная книга на руках у пользователя.
-        //Получать количество книг на руках у пользователя.
-        //Получение последней вышедшей книги.
-        //Получение списка всех книг, отсортированного в алфавитном порядке по названию.
-        //Получение списка всех книг, отсортированного в порядке убывания года их выхода.
-
-
-        // По красоте надо это дело всё разбить на подсистемы, работать через родительские классы
-        // В Servicах будут консольные команды
-        // В Repositories будут команды к БД
 }

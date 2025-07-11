@@ -1,6 +1,4 @@
 ﻿using Entity_Framework.Entityes;
-using Entity_Framework.Exceptions;
-using Entity_Framework.Services;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -91,8 +89,6 @@ namespace Entity_Framework.Repositories
             {
                 result = db.Books.Find(id);
             }
-
-            if (result == null) { throw new BookNotFoundException(); }
 
             return result;
 
